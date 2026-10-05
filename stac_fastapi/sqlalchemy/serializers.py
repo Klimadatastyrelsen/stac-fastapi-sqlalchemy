@@ -75,6 +75,7 @@ class ItemSerializer(Serializer):
     def db_to_stac(cls, db_model: database.Item, hrefbuilder: ApiTokenHrefBuilder) -> stac_types.Item:
         """Transform database model to stac item."""
         properties = db_model.properties.copy()
+        properties["product_id"] = db_model.product_id
         indexed_fields = Settings.get().indexed_fields
         for field in indexed_fields:
             # Use getattr to accommodate extension namespaces

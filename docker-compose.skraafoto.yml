@@ -1,0 +1,27 @@
+name: skraafoto-stac-restored
+
+services:
+  api:
+    image: skraafoto-stac-fastapi:oidc
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:8081:8081"
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: "8081"
+      RELOAD: "false"
+      ENVIRONMENT: local
+      POSTGRES_USER: dev_user
+      POSTGRES_PASS: ${POSTGRES_PASS:?Set POSTGRES_PASS for the Skraafoto database}
+      POSTGRES_DBNAME: skraafoto
+      POSTGRES_HOST_READER: host.docker.internal
+      POSTGRES_HOST_WRITER: host.docker.internal
+      POSTGRES_PORT: "5439"
+      AUTH_ISSUER: http://localhost:8180/realms/kds-example
+      AUTH_AUDIENCE: dataforsyningen
+      AUTH_JWKS_URL: http://host.docker.internal:8180/realms/kds-example/protocol/openid-connect/certs
+    volumes:
+      - ./skraafoto/database.py:/app/stac_fastapi/sqlalchemy/models/database.py:ro
+    command: uvicorn oidc_app:app --host 0.0.0.0 --port 8081

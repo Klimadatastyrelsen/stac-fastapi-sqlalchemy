@@ -91,6 +91,7 @@ class Item(BaseModel):  # type:ignore
     )
     parent_collection = sa.orm.relationship("Collection", back_populates="children")
     datetime = sa.Column(sa.TIMESTAMP(timezone=True), nullable=False)
+    product_id = sa.Column(sa.VARCHAR(50), nullable=False)
     #links = sa.Column(JSONB)
     instrument_id = sa.Column(sa.Integer, nullable=False)
     end_datetime = sa.Column(sa.TIMESTAMP(timezone=True), nullable=False)

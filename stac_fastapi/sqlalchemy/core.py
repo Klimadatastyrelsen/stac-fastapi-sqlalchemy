@@ -214,6 +214,13 @@ class CoreCrudClient(PaginationTokenClient, BaseCoreClient):
     for q in Queryables.get_all_queryables():
         FIELD_MAPPING[q] = item_table._default.get_field(q)
 
+    def _filter_products(self, query, request):
+        products = request.scope.get("allowed_products")
+        return (
+            query.filter(self.item_table.product_id.in_(products))
+            if products is not None else query
+        )
+
     @staticmethod
     def _lookup_id(
         id: str, table: Type[database.BaseModel], session: SqlSession
@@ -368,6 +375,7 @@ class CoreCrudClient(PaginationTokenClient, BaseCoreClient):
                 .filter(self.collection_table.id == collection_id)
                 #.order_by(self.item_table.datetime.desc(), self.item_table.id)
             )
+            query = self._filter_products(query, kwargs["request"])
 
             # crs has a default value
             if crs and self.extension_is_enabled("CrsExtension"):
@@ -704,7 +712,9 @@ class CoreCrudClient(PaginationTokenClient, BaseCoreClient):
         # base_url = str(kwargs["request"].base_url)
         hrefbuilder = self.href_builder(**kwargs)
         with self.session.reader.context_session() as session:
-            db_query = sa.select(self.item_table)
+            db_query = self._filter_products(
+                sa.select(self.item_table), kwargs["request"]
+            )
             db_query = db_query.filter(self.item_table.collection_id == collection_id)
             db_query = db_query.filter(self.item_table.id == item_id)
             db_query = db_query.options(self._geometry_expression(output_srid))
@@ -873,7 +883,9 @@ class CoreCrudClient(PaginationTokenClient, BaseCoreClient):
             pagination_token = (
                 self.from_token(search_request.pt) if search_request.pt else False
             )
-            query = sa.select(self.item_table)
+            query = self._filter_products(
+                sa.select(self.item_table), kwargs["request"]
+            )
 
             # crs has a default value
             if self.extension_is_enabled("CrsExtension"):
@@ -919,7 +931,9 @@ class CoreCrudClient(PaginationTokenClient, BaseCoreClient):
                 #page = get_page(items, per_page=search_request.limit, page=token)
                 page = select_page(session, items, per_page=search_request.limit, page=(pagination_token or False))
                 if self.extension_is_enabled("ContextExtension"):
-                    count = len(search_request.ids)
+                    count = session.scalar(
+                        sa.select(sa.func.count()).select_from(items.order_by(None).subquery())
+                    )
                 page.next = (
                     # We don't insert tokens into the database
                     #self.insert_token(keyset=page.paging.bookmark_next)
