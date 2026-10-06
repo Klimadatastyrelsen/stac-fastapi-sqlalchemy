@@ -1,6 +1,7 @@
 """SQLAlchemy ORM models."""
 
 import json
+import os
 from typing import Optional
 
 import geoalchemy2 as ga
@@ -42,7 +43,7 @@ class Collection(BaseModel):  # type:ignore
     """Collection orm model."""
 
     __tablename__ = "collections"
-    __table_args__ = {"schema": "stac_api"}
+    __table_args__ = {"schema": os.environ.get("POSTGRES_SCHEMA", "skraafoto_stac")}
 
     id = sa.Column(sa.VARCHAR(1024), nullable=False, primary_key=True)
     stac_version = sa.Column(sa.VARCHAR(300))
@@ -69,8 +70,8 @@ class Collection(BaseModel):  # type:ignore
 class Item(BaseModel):  # type:ignore
     """Item orm model."""
 
-    __tablename__ = "images_mvw"
-    __table_args__ = {"schema": "stac_api"}
+    __tablename__ = os.environ.get("POSTGRES_ITEM_TABLE", "images")
+    __table_args__ = {"schema": os.environ.get("POSTGRES_SCHEMA", "skraafoto_stac")}
 
     id = sa.Column(sa.VARCHAR(1024), nullable=False, primary_key=True)
     #stac_version = sa.Column(sa.VARCHAR(300))
@@ -152,7 +153,7 @@ class PaginationToken(BaseModel):  # type:ignore
     """Pagination orm model."""
 
     __tablename__ = "tokens"
-    __table_args__ = {"schema": "data"}
+    __table_args__ = {"schema": os.environ.get("POSTGRES_TOKEN_SCHEMA", "skraafoto_stac")}
 
     id = sa.Column(sa.VARCHAR(100), nullable=False, primary_key=True)
     keyset = sa.Column(sa.VARCHAR(1000), nullable=False)

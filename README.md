@@ -12,22 +12,6 @@ The SQLAlchemy backend requires **PostGIS>=3**.
 
 **stac-fastapi-sqlalchemy** is an HTTP interface built in FastAPI.
 
-## Local Skraafoto database
-
-Use the existing `skraafoto-stac-fastapi:oidc` image and local `skraafoto`
-database (port 5439, schema `skraafoto_stac`). The Compose file mounts the
-image-compatible adapter at `skraafoto/database.py`. Set `POSTGRES_PASS` and
-configure `AUTH_ISSUER`, `AUTH_AUDIENCE`, and `AUTH_JWKS_URL` for your OIDC
-provider, then run:
-
-```bash
-docker compose -f docker-compose.skraafoto.yml up -d
-```
-
-No schema changes or seed data are applied. The merged source uses a different
-schema and footprint/CRS serializer; verify compatibility before using it with
-this database.
-
 ## Contributing
 
 See [CONTRIBUTING](https://github.com/stac-utils/stac-fastapi-sqlalchemy/blob/main/CONTRIBUTING.md) for detailed contribution instructions.

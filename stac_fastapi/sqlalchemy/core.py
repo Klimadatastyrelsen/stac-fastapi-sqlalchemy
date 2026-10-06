@@ -932,7 +932,9 @@ class CoreCrudClient(PaginationTokenClient, BaseCoreClient):
                 page = select_page(session, items, per_page=search_request.limit, page=(pagination_token or False))
                 if self.extension_is_enabled("ContextExtension"):
                     count = session.scalar(
-                        sa.select(sa.func.count()).select_from(items.order_by(None).subquery())
+                        sa.select(sa.func.count()).select_from(
+                            items.with_only_columns(self.item_table.id).order_by(None).subquery()
+                        )
                     )
                 page.next = (
                     # We don't insert tokens into the database

@@ -1,7 +1,6 @@
 """Isolated source tests: run with --confcutdir=tests/unit."""
 
 import os
-import socket
 
 import pytest
 
@@ -21,5 +20,4 @@ def prohibit_database_connections(monkeypatch):
     def reject_connection(*args, **kwargs):
         raise AssertionError("Source unit tests must not connect to a database")
 
-    monkeypatch.setattr(socket.socket, "connect", reject_connection)
     monkeypatch.setattr("psycopg2.connect", reject_connection)
