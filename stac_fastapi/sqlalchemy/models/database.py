@@ -70,7 +70,7 @@ class Collection(BaseModel):  # type:ignore
 class Item(BaseModel):  # type:ignore
     """Item orm model."""
 
-    __tablename__ = os.environ.get("STAC_ITEM_TABLE", "images")
+    __tablename__ = os.environ.get("STAC_ITEM_TABLE", "images_mvw")
     __table_args__ = {"schema": os.environ.get("STAC_SCHEMA", "stac_api")}
 
     id = sa.Column(sa.VARCHAR(1024), nullable=False, primary_key=True)
