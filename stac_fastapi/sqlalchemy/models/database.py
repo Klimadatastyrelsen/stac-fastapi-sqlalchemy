@@ -43,7 +43,7 @@ class Collection(BaseModel):  # type:ignore
     """Collection orm model."""
 
     __tablename__ = "collections"
-    __table_args__ = {"schema": os.environ.get("POSTGRES_SCHEMA", "stac_api")}
+    __table_args__ = {"schema": os.environ.get("STAC_SCHEMA", "stac_api")}
 
     id = sa.Column(sa.VARCHAR(1024), nullable=False, primary_key=True)
     stac_version = sa.Column(sa.VARCHAR(300))
@@ -70,8 +70,8 @@ class Collection(BaseModel):  # type:ignore
 class Item(BaseModel):  # type:ignore
     """Item orm model."""
 
-    __tablename__ = os.environ.get("POSTGRES_ITEM_TABLE", "images")
-    __table_args__ = {"schema": os.environ.get("POSTGRES_SCHEMA", "stac_api")}
+    __tablename__ = os.environ.get("STAC_ITEM_TABLE", "images")
+    __table_args__ = {"schema": os.environ.get("STAC_SCHEMA", "stac_api")}
 
     id = sa.Column(sa.VARCHAR(1024), nullable=False, primary_key=True)
     #stac_version = sa.Column(sa.VARCHAR(300))
@@ -147,3 +147,13 @@ class Item(BaseModel):  # type:ignore
                 raise RequestValidationError(
                    f"No matching field name: {field_name}"
                 )      
+
+
+class PaginationToken(BaseModel):  # type:ignore
+    """Pagination orm model."""
+
+    __tablename__ = "tokens"
+    __table_args__ = {"schema": "data"}
+
+    id = sa.Column(sa.VARCHAR(100), nullable=False, primary_key=True)
+    keyset = sa.Column(sa.VARCHAR(1000), nullable=False)

@@ -98,6 +98,7 @@ def postgres_core(db_session):
         session=db_session,
         item_table=database.Item,
         collection_table=database.Collection,
+        # token_table=database.PaginationToken,
     )
 
 
