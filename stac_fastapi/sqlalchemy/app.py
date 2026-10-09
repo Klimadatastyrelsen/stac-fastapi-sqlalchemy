@@ -94,6 +94,16 @@ api = StacApi(
 )
 app = api.app
 
+if settings.oidc_enabled:
+    # pyjwt only ships with the stac-fastapi.api[oidc] extra
+    from stac_fastapi.api.oidc import OIDCTokenAuth
+
+    OIDCTokenAuth(
+        issuer=settings.oidc_issuer,
+        audience=settings.oidc_audience,
+        jwks_url=settings.oidc_jwks_url,
+    ).install(app)
+
 
 def run():
     """Run app from command line using uvicorn if available."""

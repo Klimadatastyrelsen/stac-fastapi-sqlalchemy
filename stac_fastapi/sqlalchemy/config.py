@@ -14,6 +14,10 @@ class SqlalchemySettings(ApiSettings):
         postgres_host_writer: hostname for the writer connection.
         postgres_port: database port.
         postgres_dbname: database name.
+        oidc_enabled: require a valid bearer token on every route but the ping.
+        oidc_issuer: exact `iss` value tokens must carry.
+        oidc_audience: `aud` value tokens must carry.
+        oidc_jwks_url: endpoint serving the issuer's signing keys.
     """
 
     postgres_user: str
@@ -22,6 +26,12 @@ class SqlalchemySettings(ApiSettings):
     postgres_host_writer: str
     postgres_port: str
     postgres_dbname: str
+
+    oidc_enabled: bool = False
+    oidc_issuer: str = ""
+    oidc_audience: str = ""
+    oidc_jwks_url: str = ""
+
     connect_args={"options": "-c statement_timeout=10000"}
 
 
