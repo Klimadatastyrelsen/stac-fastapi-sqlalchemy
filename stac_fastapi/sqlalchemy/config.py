@@ -18,6 +18,9 @@ class SqlalchemySettings(ApiSettings):
         oidc_issuer: exact `iss` value tokens must carry.
         oidc_audience: `aud` value tokens must carry.
         oidc_jwks_url: endpoint serving the issuer's signing keys.
+        oidc_introspection_url: RFC 7662 endpoint resolving opaque API keys.
+        oidc_introspection_client_id: this API's OAuth client at the issuer.
+        oidc_introspection_client_secret: secret the introspection call authenticates with.
     """
 
     postgres_user: str
@@ -31,6 +34,9 @@ class SqlalchemySettings(ApiSettings):
     oidc_issuer: str = ""
     oidc_audience: str = ""
     oidc_jwks_url: str = ""
+    oidc_introspection_url: str = ""
+    oidc_introspection_client_id: str = ""
+    oidc_introspection_client_secret: str = ""
 
     connect_args={"options": "-c statement_timeout=10000"}
 
