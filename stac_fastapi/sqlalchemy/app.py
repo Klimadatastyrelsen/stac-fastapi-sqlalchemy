@@ -102,6 +102,9 @@ if settings.oidc_enabled:
         issuer=settings.oidc_issuer,
         audience=settings.oidc_audience,
         jwks_url=settings.oidc_jwks_url,
+        introspection_url=settings.oidc_introspection_url,
+        introspection_client_id=settings.oidc_introspection_client_id,
+        introspection_client_secret=settings.oidc_introspection_client_secret,
     ).install(app)
 
 
