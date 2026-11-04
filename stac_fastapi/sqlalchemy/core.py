@@ -216,9 +216,14 @@ class CoreCrudClient(PaginationTokenClient, BaseCoreClient):
 
     def _filter_products(self, query, request):
         products = request.scope.get("allowed_products")
-        return (
-            query.filter(self.item_table.product_id.in_(products))
-            if products is not None else query
+        if products is None:
+            return query
+        # public rows carry no product, hidden ones need a matching claim
+        return query.filter(
+            sa.or_(
+                self.item_table.product_id.is_(None),
+                self.item_table.product_id.in_(products),
+            )
         )
 
     @staticmethod
