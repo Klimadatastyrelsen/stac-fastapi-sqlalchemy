@@ -158,7 +158,7 @@ item_counts = (
         sa.column("product_id"),
         sa.column("n"),
         sa.column("images_oid"),
-        schema=os.environ.get("STAC_SCHEMA", "stac_api"),
+        schema=Item.__table__.schema,
     )
     if _count_table
     else None

@@ -215,17 +215,36 @@ class CoreCrudClient(PaginationTokenClient, BaseCoreClient):
     for q in Queryables.get_all_queryables():
         FIELD_MAPPING[q] = item_table._default.get_field(q)
 
-    def _filter_products(self, query, request):
+    @staticmethod
+    def _product_rule(product_id, request):
         products = request.scope.get("allowed_products")
         if products is None:
-            return query
+            return None
         # public rows carry no product, hidden ones need a matching claim
-        return query.filter(
-            sa.or_(
-                self.item_table.product_id.is_(None),
-                self.item_table.product_id.in_(products),
-            )
+        return sa.or_(product_id.is_(None), product_id.in_(products))
+
+    def _filter_products(self, query, request):
+        rule = self._product_rule(self.item_table.product_id, request)
+        return query if rule is None else query.filter(rule)
+
+    def _match_count(
+        self,
+        session,
+        query,
+        request,
+        unfiltered: bool,
+        collection_ids: Optional[List[str]],
+    ) -> int:
+        """Count what query matches, from the count table when nothing but collection narrows it."""
+        count = (
+            self._precomputed_count(session, request, collection_ids)
+            if unfiltered
+            else None
         )
+        if count is None:
+            count_query = query.with_only_columns(sa.func.count()).order_by(None)
+            count = session.execute(count_query).scalar()
+        return count
 
     def _precomputed_count(
         self, session, request, collection_ids: Optional[List[str]]
@@ -237,20 +256,18 @@ class CoreCrudClient(PaginationTokenClient, BaseCoreClient):
         if self.count_table is None:
             return None
         counts = self.count_table.c
-        rules = [sa.true()]
+        rules = []
         if collection_ids is not None:
             rules.append(counts.collection_id.in_(collection_ids))
-        products = request.scope.get("allowed_products")
-        if products is not None:
-            rules.append(
-                sa.or_(counts.product_id.is_(None), counts.product_id.in_(products))
-            )
+        product_rule = self._product_rule(counts.product_id, request)
+        if product_rule is not None:
+            rules.append(product_rule)
         items = self.item_table.__table__
         # a sync swaps in a new item table with a new oid, so a mismatch means the counts are stale
         live_oid = sa.cast(sa.literal(f'"{items.schema}"."{items.name}"'), REGCLASS)
         total, fresh = session.execute(
             sa.select(
-                sa.func.coalesce(sa.func.sum(counts.n).filter(sa.and_(*rules)), 0),
+                sa.func.coalesce(sa.func.sum(counts.n).filter(*rules), 0),
                 sa.func.bool_or(counts.images_oid == live_oid),
             )
         ).one()
@@ -590,15 +607,13 @@ class CoreCrudClient(PaginationTokenClient, BaseCoreClient):
 
             count = None
             if self.extension_is_enabled("ContextExtension"):
-                if not (bbox or datetime or filter):
-                    count = self._precomputed_count(
-                        session, kwargs["request"], [collection_id]
-                    )
-                if count is None:
-                    count_query = query.with_only_columns(
-                        sa.func.count()
-                    ).order_by(None)
-                    count = session.execute(count_query).scalar()
+                count = self._match_count(
+                    session,
+                    query,
+                    kwargs["request"],
+                    unfiltered=not (bbox or datetime or filter),
+                    collection_ids=[collection_id],
+                )
 
             #token = self.get_token(token) if token else token
             pagination_token = (self.from_token(pt) if pt else pt)
@@ -1149,23 +1164,17 @@ class CoreCrudClient(PaginationTokenClient, BaseCoreClient):
                 #                 query = query.filter(op.operator(field, value))
 
                 if self.extension_is_enabled("ContextExtension"):
-                    if (
-                        search_request.intersects is None
+                    count = self._match_count(
+                        session,
+                        query,
+                        kwargs["request"],
+                        unfiltered=search_request.intersects is None
                         and not search_request.bbox
                         and not search_request.filter
-                        and not search_request.datetime
-                    ):
+                        and not search_request.datetime,
                         # empty collections means all, as in the collection filter above
-                        count = self._precomputed_count(
-                            session,
-                            kwargs["request"],
-                            search_request.collections or None,
-                        )
-                    if count is None:
-                        count_query = query.with_only_columns(
-                            sa.func.count()
-                        ).order_by(None)
-                        count = session.execute(count_query).scalar()
+                        collection_ids=search_request.collections or None,
+                    )
                 #page = get_page(query, per_page=search_request.limit, page=token)
                 page = select_page(session, query, per_page=search_request.limit, page=(pagination_token or False))
                 # Create dynamic attributes for each page
