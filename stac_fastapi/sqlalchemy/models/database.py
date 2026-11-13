@@ -149,6 +149,22 @@ class Item(BaseModel):  # type:ignore
                 )      
 
 
+# per collection and product item counts kept by the dagster sync; unset means count the item table live
+_count_table = os.environ.get("STAC_COUNT_TABLE")
+item_counts = (
+    sa.table(
+        _count_table,
+        sa.column("collection_id"),
+        sa.column("product_id"),
+        sa.column("n"),
+        sa.column("images_oid"),
+        schema=os.environ.get("STAC_SCHEMA", "stac_api"),
+    )
+    if _count_table
+    else None
+)
+
+
 class PaginationToken(BaseModel):  # type:ignore
     """Pagination orm model."""
 
