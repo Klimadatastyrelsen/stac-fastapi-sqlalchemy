@@ -46,6 +46,9 @@ logger = logging.getLogger(__name__)
 
 NumType = Union[float, int]
 
+# the framework Limit type allows up to 10000
+MAX_LIMIT = 1000
+
 def monkeypatch_parse_geometry(geom):
     try:
         wkt = shape(geom).wkt
@@ -364,6 +367,8 @@ class CoreCrudClient(PaginationTokenClient, BaseCoreClient):
         **kwargs,
     ) -> ItemCollection:
         """Read an item collection from the database."""
+        # limit is an unvalidated query param here, unlike on the search routes
+        limit = min(limit, MAX_LIMIT)
         # base_url = str(kwargs["request"].base_url)
         hrefbuilder = self.href_builder(**kwargs)
         with self.session.reader.context_session() as session:
@@ -872,6 +877,7 @@ class CoreCrudClient(PaginationTokenClient, BaseCoreClient):
         self, search_request: BaseSearchPostRequest, is_direct_post = True, **kwargs
     ) -> ItemCollection:
         """POST search catalog."""
+        search_request.limit = min(search_request.limit or 10, MAX_LIMIT)
         #base_url = str(kwargs["request"].base_url)
         hrefbuilder = self.href_builder(**kwargs)
         
