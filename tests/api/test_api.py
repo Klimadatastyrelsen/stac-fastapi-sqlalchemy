@@ -323,6 +323,17 @@ def test_app_filter_extension_limit_gt10000(app_client):
     assert resp.status_code == 200
 
 
+def test_app_limit_clamped_to_1000(load_test_data, app_client):
+    item = load_test_data("test_item.json")
+    params = {"limit": 1001}
+
+    resp = app_client.post("/search", json=params)
+    assert resp.json()["context"]["limit"] == 1000
+
+    resp = app_client.get(f"/collections/{item['collection']}/items", params=params)
+    assert resp.json()["context"]["limit"] == 1000
+
+
 # def test_app_sort_extension(load_test_data, app_client, postgres_transactions):
 def test_app_sort_extension( app_client):
     # first_item = load_test_data("test_item.json")
